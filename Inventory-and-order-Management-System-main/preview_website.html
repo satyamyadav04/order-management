@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sphere // Intelligent Inventory Preview</title>
+    <!-- Google Fonts Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Premium Styles (directly injected from index.css) -->
+    <style>
+      :root {
+        --bg-primary: #0a0b10;
+        --bg-secondary: #12131a;
+        --glass-bg: rgba(18, 19, 26, 0.65);
+        --glass-bg-hover: rgba(26, 27, 38, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-border-focus: rgba(168, 85, 247, 0.4);
+        
+        --color-primary: #a855f7;       /* Violet */
+        --color-secondary: #3b82f6;     /* Blue */
+        --color-success: #10b981;       /* Emerald */
+        --color-danger: #f43f5e;        /* Rose */
+        --color-warning: #f59e0b;       /* Amber */
+        
+        --text-main: #f3f4f6;
+        --text-muted: #9ca3af;
+        --text-inverse: #0a0b10;
+        
+        --font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --shadow-glow: 0 0 20px rgba(168, 85, 247, 0.15);
+        --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        --border-radius-lg: 16px;
+        --border-radius-md: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--bg-primary);
+        background-image: 
+          radial-gradient(at 10% 20%, rgba(168, 85, 247, 0.1) 0px, transparent 50%),
+          radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+        background-attachment: fixed;
+        color: var(--text-main);
+        min-height: 100vh;
+        overflow-x: hidden;
+        line-height: 1.5;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--glass-border);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary);
+      }
+
+      h1, h2, h3, h4 {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .app-container {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        min-height: 100vh;
+      }
+
+      @media (max-width: 900px) {
+        .app-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .sidebar {
+        background: rgba(10, 11, 16, 0.85);
+        border-right: 1px solid var(--glass-border);
+        backdrop-filter: blur(16px);
+        padding: 2.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        z-index: 10;
+      }
+
+      @media (max-width: 900px) {
+        .sidebar {
+          height: auto;
+          position: relative;
+          padding: 1.5rem;
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          border-right: none;
+          border-bottom: 1px solid var(--glass-border);
+        }
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 3rem;
+      }
+
+      @media (max-width: 900px) {
+        .brand {
+          margin-bottom: 0;
+        }
+      }
+
+      .brand-logo {
+        color: var(--color-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5));
+      }
+
+      .brand-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--text-main) 30%, var(--text-muted) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .nav-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex-grow: 1;
+      }
+
+      @media (max-width: 900px) {
+        .nav-links {
+          flex-direction: row;
+          width: 100%;
+          margin-top: 1.5rem;
+          overflow-x: auto;
+          padding-bottom: 0.5rem;
+        }
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        padding: 0.85rem 1rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-family: var(--font-family);
+        font-size: 0.875rem;
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        transition: var(--transition-smooth);
+      }
+
+      .nav-item:hover {
+        color: var(--text-main);
+        background: var(--glass-bg);
+      }
+
+      .nav-item.active {
+        color: var(--text-main);
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(59, 130, 246, 0.05));
+        border: 1px solid var(--glass-border-focus);
+        box-shadow: var(--shadow-glow);
+      }
+
+      .content-area {
+        padding: 3rem;
+        overflow-y: auto;
+      }
+
+      @media (max-width: 900px) {
+        .content-area {
+          padding: 1.5rem;
+        }
+      }
+
+      .glass-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(12px);
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-card);
+        transition: var(--transition-smooth);
+        margin-bottom: 1.5rem;
+      }
+
+      .glass-card:hover {
+        background: var(--glass-bg-hover);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+
+      .stat-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0;
+      }
+
+      .stat-info h3 {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-info p {
+        font-size: 2.25rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stat-icon.primary {
+        background: rgba(168, 85, 247, 0.15);
+        color: var(--color-primary);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+      }
+
+      .stat-icon.secondary {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--color-secondary);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+
+      .stat-icon.success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--color-success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+
+      .stat-icon.warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--color-warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+
+      .dashboard-details-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+      }
+
+      @media (max-width: 1024px) {
+        .dashboard-details-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+
+      .section-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        border-radius: var(--border-radius-md);
+        border: none;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        font-family: var(--font-family);
+        text-decoration: none;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+      }
+
+      .btn-success {
+        background: var(--color-success);
+        color: #fff;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+        transform: translateY(-2px);
+      }
+
+      .btn-danger {
+        background: rgba(244, 63, 94, 0.15);
+        color: var(--color-danger);
+        border: 1px solid rgba(244, 63, 94, 0.2);
+      }
+
+      .btn-danger:hover {
+        background: var(--color-danger);
+        color: #fff;
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-main);
+        border: 1px solid var(--glass-border);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .btn-icon-only {
+        padding: 0.5rem;
+        border-radius: 8px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+
+      .form-control {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-md);
+        padding: 0.75rem 1rem;
+        color: var(--text-main);
+        font-family: var(--font-family);
+        font-size: 0.875rem;
+        transition: var(--transition-smooth);
+      }
+
+      .form-control:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.07);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+      }
+
+      select.form-control option {
+        background-color: var(--bg-secondary);
+        color: var(--text-main);
+      }
+
+      .table-container {
+        overflow-x: auto;
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--glass-border);
+      }
+
+      .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.875rem;
+      }
+
+      .custom-table th {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 1rem 1.25rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .custom-table td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--glass-border);
+        vertical-align: middle;
+      }
+
+      .custom-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .custom-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.625rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: 9999px;
+      }
+
+      .badge-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--color-warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+
+      .badge-success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--color-success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+      }
+
+      .badge-danger {
+        background: rgba(244, 63, 94, 0.15);
+        color: var(--color-danger);
+        border: 1px solid rgba(244, 63, 94, 0.2);
+      }
+
+      .badge-info {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--color-secondary);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+
+      .alert-banner {
+        padding: 1rem 1.25rem;
+        border-radius: var(--border-radius-md);
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideInDown 0.3s ease-out;
+      }
+
+      .alert-banner.success {
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: #a7f3d0;
+      }
+
+      .alert-banner.error {
+        background: rgba(244, 63, 94, 0.12);
+        border: 1px solid rgba(244, 63, 94, 0.25);
+        color: #fecdd3;
+      }
+
+      @keyframes slideInDown {
+        from { transform: translateY(-10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .split-layout {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2rem;
+      }
+
+      @media (max-width: 1024px) {
+        .split-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .order-builder {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .added-items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin: 1rem 0;
+      }
+
+      .added-item-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius-md);
+      }
+
+      .total-summary-box {
+        background: rgba(168, 85, 247, 0.08);
+        border: 1px solid var(--glass-border-focus);
+        padding: 1.25rem;
+        border-radius: var(--border-radius-md);
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .total-price-text {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #fff;
+        text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+      }
+
+      .loading-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 2rem;
+        color: var(--text-muted);
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top-color: var(--color-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        animation: fadeIn 0.25s ease-out;
+      }
+
+      .modal-content {
+        width: 90%;
+        max-width: 600px;
+        max-height: 85vh;
+        overflow-y: auto;
+        margin-bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- React 18, ReactDOM & Babel CDN libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- React App Script -->
+    <script type="text/babel">
+      const API_URL = 'http://localhost:8000';
+
+      // --- Inline SVG Icons to make preview stand-alone ---
+      function SvgIcon({ name, size = 18, style = {} }) {
+        const svgProps = {
+          xmlns: "http://www.w3.org/2000/svg",
+          width: size,
+          height: size,
+          viewBox: "0 0 24 24",
+          fill: "none",
+          stroke: "currentColor",
+          strokeWidth: "2",
+          strokeLinecap: "round",
+          strokeLinejoin: "round",
+          style: { display: 'inline-block', verticalAlign: 'middle', ...style }
+        };
+
+        switch (name) {
+          case 'dashboard':
+            return (
+              <svg {...svgProps}>
+                <rect x="3" y="3" width="7" height="9" rx="1" />
+                <rect x="14" y="3" width="7" height="5" rx="1" />
+                <rect x="14" y="12" width="7" height="9" rx="1" />
+                <rect x="3" y="16" width="7" height="5" rx="1" />
+              </svg>
+            );
+          case 'package':
+            return (
+              <svg {...svgProps}>
+                <path d="m7.5 4.27 9 5.15" />
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                <path d="m3.27 6.96 8.73 5.05 8.73-5.05" />
+                <path d="M12 22.08V12" />
+              </svg>
+            );
+          case 'users':
+            return (
+              <svg {...svgProps}>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            );
+          case 'cart':
+            return (
+              <svg {...svgProps}>
+                <circle cx="8" cy="21" r="1" />
+                <circle cx="19" cy="21" r="1" />
+                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              </svg>
+            );
+          case 'activity':
+            return (
+              <svg {...svgProps}>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+            );
+          case 'plus':
+            return (
+              <svg {...svgProps}>
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+              </svg>
+            );
+          case 'trash':
+            return (
+              <svg {...svgProps}>
+                <path d="M3 6h18" />
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              </svg>
+            );
+          case 'edit':
+            return (
+              <svg {...svgProps}>
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            );
+          case 'x':
+            return (
+              <svg {...svgProps}>
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            );
+          case 'eye':
+            return (
+              <svg {...svgProps}>
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            );
+          case 'calendar':
+            return (
+              <svg {...svgProps}>
+                <path d="M8 2v4" />
+                <path d="M16 2v4" />
+                <rect width="18" height="18" x="3" y="4" rx="2" />
+                <path d="M3 10h18" />
+              </svg>
+            );
+          case 'alert':
+            return (
+              <svg {...svgProps}>
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            );
+          case 'mail':
+            return (
+              <svg {...svgProps}>
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            );
+          case 'phone':
+            return (
+              <svg {...svgProps}>
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+            );
+          case 'user':
+            return (
+              <svg {...svgProps}>
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            );
+          default:
+            return null;
+        }
+      }
+
+      // --- Component 1: Dashboard ---
+      function Dashboard({ showNotification }) {
+        const [stats, setStats] = React.useState(null);
+        const [loading, setLoading] = React.useState(true);
+
+        const fetchStats = async () => {
+          try {
+            setLoading(true);
+            const res = await fetch(`${API_URL}/dashboard/stats`);
+            if (!res.ok) throw new Error('Could not fetch stats');
+            const data = await res.json();
+            setStats(data);
+          } catch (err) {
+            console.error(err);
+            showNotification('error', 'Dashboard API offline. Make sure the local python backend is running.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        React.useEffect(() => { fetchStats(); }, []);
+
+        if (loading) {
+          return (
+            <div className="loading-indicator">
+              <div className="spinner"></div>
+              <span>Connecting to system metrics...</span>
+            </div>
+          );
+        }
+
+        return (
+          <div className="fade-in">
+            <div className="section-header">
+              <h2>
+                <SvgIcon name="dashboard" size={24} style={{ color: 'var(--color-primary)' }} />
+                Dashboard Overview
+              </h2>
+              <button className="btn btn-secondary" onClick={fetchStats}>Refresh Data</button>
+            </div>
+
+            <div className="dashboard-grid">
+              <div className="glass-card stat-card">
+                <div className="stat-info">
+                  <h3>Total Products</h3>
+                  <p>{stats?.total_products ?? 0}</p>
+                </div>
+                <div className="stat-icon primary">
+                  <SvgIcon name="package" size={22} />
+                </div>
+              </div>
+
+              <div className="glass-card stat-card">
+                <div className="stat-info">
+                  <h3>Total Customers</h3>
+                  <p>{stats?.total_customers ?? 0}</p>
+                </div>
+                <div className="stat-icon secondary">
+                  <SvgIcon name="users" size={22} />
+                </div>
+              </div>
+
+              <div className="glass-card stat-card">
+                <div className="stat-info">
+                  <h3>Total Orders</h3>
+                  <p>{stats?.total_orders ?? 0}</p>
+                </div>
+                <div className="stat-icon success">
+                  <SvgIcon name="cart" size={22} />
+                </div>
+              </div>
+
+              <div className="glass-card stat-card">
+                <div className="stat-info">
+                  <h3>Low Stock Alerts</h3>
+                  <p>{stats?.low_stock_count ?? 0}</p>
+                </div>
+                <div className="stat-icon warning">
+                  <SvgIcon name="alert" size={22} />
+                </div>
+              </div>
+            </div>
+
+            <div className="dashboard-details-grid">
+              <div className="glass-card">
+                <div className="section-header" style={{ marginBottom: '1rem' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem' }}>
+                    <SvgIcon name="alert" size={20} style={{ color: 'var(--color-warning)' }} />
+                    Low Stock Warnings
+                  </h3>
+                  <span className="badge badge-warning">{stats?.low_stock_count ?? 0} Warnings</span>
+                </div>
+
+                {stats?.low_stock_products && stats.low_stock_products.length > 0 ? (
+                  <div className="table-container">
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>Product Name</th>
+                          <th>SKU/Code</th>
+                          <th>Price</th>
+                          <th>Quantity left</th>
+                          <th>Stock status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stats.low_stock_products.map((product) => (
+                          <tr key={product.id}>
+                            <td><span style={{ fontWeight: '600' }}>{product.name}</span></td>
+                            <td><code>{product.sku}</code></td>
+                            <td>${product.price.toFixed(2)}</td>
+                            <td>
+                              <span style={{ fontWeight: 'bold', color: product.quantity === 0 ? 'var(--color-danger)' : 'var(--color-warning)' }}>
+                                {product.quantity}
+                              </span>
+                            </td>
+                            <td>
+                              {product.quantity === 0 ? (
+                                <span className="badge badge-danger">Out of Stock</span>
+                              ) : (
+                                <span className="badge badge-warning">Low Stock</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    ✓ All products have optimal stock levels.
+                  </div>
+                )}
+              </div>
+
+              <div className="glass-card">
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>System Status</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.875rem' }}>
+                  <div style={{ borderLeft: '3px solid var(--color-success)', paddingLeft: '0.75rem' }}>
+                    <p style={{ fontWeight: 'bold' }}>Local Database Server</p>
+                    <p style={{ color: 'var(--text-muted)' }}>SQLite Database - Connected</p>
+                  </div>
+                  <div style={{ borderLeft: '3px solid var(--color-primary)', paddingLeft: '0.75rem' }}>
+                    <p style={{ fontWeight: 'bold' }}>FastAPI Backend</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Active at http://localhost:8000</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // --- Component 2: Products ---
+      function Products({ showNotification }) {
+        const [products, setProducts] = React.useState([]);
+        const [loading, setLoading] = React.useState(true);
+        const [name, setName] = React.useState('');
+        const [sku, setSku] = React.useState('');
+        const [price, setPrice] = React.useState('');
+        const [quantity, setQuantity] = React.useState('');
+        const [editingId, setEditingId] = React.useState(null);
+
+        const fetchProducts = async () => {
+          try {
+            setLoading(true);
+            const res = await fetch(`${API_URL}/products`);
+            if (!res.ok) throw new Error('Could not fetch products');
+            const data = await res.json();
+            setProducts(data);
+          } catch (err) {
+            console.error(err);
+            showNotification('error', 'Failed to retrieve products.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        React.useEffect(() => { fetchProducts(); }, []);
+
+        const resetForm = () => {
+          setName('');
+          setSku('');
+          setPrice('');
+          setQuantity('');
+          setEditingId(null);
+        };
+
+        const handleEditInit = (product) => {
+          setEditingId(product.id);
+          setName(product.name);
+          setSku(product.sku);
+          setPrice(product.price.toString());
+          setQuantity(product.quantity.toString());
+        };
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+
+          if (!name.trim() || !sku.trim() || price === '' || quantity === '') {
+            showNotification('error', 'All fields are required.');
+            return;
+          }
+
+          const priceVal = parseFloat(price);
+          const qtyVal = parseInt(quantity, 10);
+
+          if (isNaN(priceVal) || priceVal < 0 || isNaN(qtyVal) || qtyVal < 0) {
+            showNotification('error', 'Price and Quantity cannot be negative.');
+            return;
+          }
+
+          const payload = {
+            name: name.trim(),
+            sku: sku.trim().toUpperCase(),
+            price: priceVal,
+            quantity: qtyVal
+          };
+
+          try {
+            let res;
+            if (editingId) {
+              res = await fetch(`${API_URL}/products/${editingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            } else {
+              res = await fetch(`${API_URL}/products`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            }
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Error saving product');
+
+            showNotification('success', editingId ? 'Product updated.' : 'Product added.');
+            resetForm();
+            fetchProducts();
+          } catch (err) {
+            console.error(err);
+            showNotification('error', err.message);
+          }
+        };
+
+        const handleDelete = async (id) => {
+          if (!window.confirm('Delete this product?')) return;
+          try {
+            const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Could not delete');
+            showNotification('success', 'Product deleted.');
+            fetchProducts();
+            if (editingId === id) resetForm();
+          } catch (err) {
+            console.error(err);
+            showNotification('error', err.message);
+          }
+        };
+
+        return (
+          <div className="fade-in">
+            <div className="section-header">
+              <h2>
+                <SvgIcon name="package" size={24} style={{ color: 'var(--color-primary)' }} />
+                Product Catalog
+              </h2>
+            </div>
+
+            <div className="split-layout">
+              <div className="glass-card">
+                <h3>{editingId ? 'Edit Product Details' : 'Add New Product'}</h3>
+                <form onSubmit={handleSubmit} className="order-builder" style={{ marginTop: '1.5rem' }}>
+                  <div className="form-group">
+                    <label>Product Name</label>
+                    <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>SKU / Code</label>
+                    <input type="text" className="form-control" value={sku} onChange={(e) => setSku(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Price ($ USD)</label>
+                    <input type="number" step="0.01" className="form-control" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Quantity in Stock</label>
+                    <input type="number" className="form-control" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <button type="submit" className="btn btn-primary" style={{ flexGrow: 1 }}>
+                      {editingId ? 'Update' : 'Register'}
+                    </button>
+                    {editingId && (
+                      <button type="button" className="btn btn-secondary" onClick={resetForm}><SvgIcon name="x" size={16} /></button>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              <div className="glass-card">
+                <h3>Product Registry</h3>
+                {loading ? (
+                  <div className="loading-indicator"><div className="spinner"></div></div>
+                ) : products.length > 0 ? (
+                  <div className="table-container" style={{ marginTop: '1.5rem' }}>
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>Details</th>
+                          <th>SKU</th>
+                          <th>Price</th>
+                          <th>Stock</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {products.map(p => (
+                          <tr key={p.id}>
+                            <td>
+                              <strong>{p.name}</strong>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>ID: #{p.id}</span>
+                            </td>
+                            <td><code>{p.sku}</code></td>
+                            <td>${p.price.toFixed(2)}</td>
+                            <td>
+                              <span style={{ 
+                                fontWeight: 'bold', 
+                                color: p.quantity === 0 ? 'var(--color-danger)' : 
+                                       p.quantity < 10 ? 'var(--color-warning)' : 'var(--color-success)' 
+                              }}>{p.quantity} units</span>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-secondary btn-icon-only" onClick={() => handleEditInit(p)}><SvgIcon name="edit" size={14} /></button>
+                                <button className="btn btn-danger btn-icon-only" onClick={() => handleDelete(p.id)}><SvgIcon name="trash" size={14} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)', textAlign: 'center' }}>No products registered.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // --- Component 3: Customers ---
+      function Customers({ showNotification }) {
+        const [customers, setCustomers] = React.useState([]);
+        const [loading, setLoading] = React.useState(true);
+        const [name, setName] = React.useState('');
+        const [email, setEmail] = React.useState('');
+        const [phone, setPhone] = React.useState('');
+
+        const fetchCustomers = async () => {
+          try {
+            setLoading(true);
+            const res = await fetch(`${API_URL}/customers`);
+            if (!res.ok) throw new Error('Could not fetch customers');
+            const data = await res.json();
+            setCustomers(data);
+          } catch (err) {
+            console.error(err);
+            showNotification('error', 'Failed to retrieve customers.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        React.useEffect(() => { fetchCustomers(); }, []);
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+          if (!name.trim() || !email.trim() || !phone.trim()) {
+            showNotification('error', 'Please fill in all fields.');
+            return;
+          }
+
+          const payload = { name: name.trim(), email: email.trim().toLowerCase(), phone: phone.trim() };
+          try {
+            const res = await fetch(`${API_URL}/customers`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Could not register customer');
+
+            showNotification('success', 'Customer registered successfully.');
+            setName(''); setEmail(''); setPhone('');
+            fetchCustomers();
+          } catch (err) {
+            console.error(err);
+            showNotification('error', err.message);
+          }
+        };
+
+        const handleDelete = async (id) => {
+          if (!window.confirm('Delete customer? This removes their order history as well.')) return;
+          try {
+            const res = await fetch(`${API_URL}/customers/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Could not delete customer');
+            showNotification('success', 'Customer deleted.');
+            fetchCustomers();
+          } catch (err) {
+            console.error(err);
+            showNotification('error', err.message);
+          }
+        };
+
+        return (
+          <div className="fade-in">
+            <div className="section-header">
+              <h2>
+                <SvgIcon name="users" size={24} style={{ color: 'var(--color-primary)' }} />
+                Customers Directory
+              </h2>
+            </div>
+
+            <div className="split-layout">
+              <div className="glass-card">
+                <h3>Add New Customer</h3>
+                <form onSubmit={handleSubmit} className="order-builder" style={{ marginTop: '1.5rem' }}>
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Email Address</label>
+                    <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
+                    Add Customer
+                  </button>
+                </form>
+              </div>
+
+              <div className="glass-card">
+                <h3>Registered Customers</h3>
+                {loading ? (
+                  <div className="loading-indicator"><div className="spinner"></div></div>
+                ) : customers.length > 0 ? (
+                  <div className="table-container" style={{ marginTop: '1.5rem' }}>
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Phone</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customers.map(c => (
+                          <tr key={c.id}>
+                            <td><strong>{c.name}</strong><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>ID: #{c.id}</span></td>
+                            <td><code>{c.email}</code></td>
+                            <td>{c.phone}</td>
+                            <td style={{ textAlign: 'right' }}>
+                              <button className="btn btn-danger btn-icon-only" onClick={() => handleDelete(c.id)}><SvgIcon name="trash" size={14} /></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)', textAlign: 'center' }}>No customers registered.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // --- Component 4: Orders ---
+      function Orders({ showNotification }) {
+        const [orders, setOrders] = React.useState([]);
+        const [customers, setCustomers] = React.useState([]);
+        const [products, setProducts] = React.useState([]);
+        const [loading, setLoading] = React.useState(true);
+
+        const [selectedCustomerId, setSelectedCustomerId] = React.useState('');
+        const [selectedProductId, setSelectedProductId] = React.useState('');
+        const [itemQuantity, setItemQuantity] = React.useState('1');
+        const [cartItems, setCartItems] = React.useState([]);
+        const [activeOrderDetails, setActiveOrderDetails] = React.useState(null);
+
+        const fetchData = async () => {
+          try {
+            setLoading(true);
+            const [ordersRes, customersRes, productsRes] = await Promise.all([
+              fetch(`${API_URL}/orders`),
+              fetch(`${API_URL}/customers`),
+              fetch(`${API_URL}/products`)
+            ]);
+            if (!ordersRes.ok || !customersRes.ok || !productsRes.ok) throw new Error('Data sync failure');
+
+            const [ordersData, customersData, productsData] = await Promise.all([
+              ordersRes.json(),
+              customersRes.json(),
+              productsRes.json()
+            ]);
+
+            setOrders(ordersData);
+            setCustomers(customersData);
+            setProducts(productsData);
+          } catch (err) {
+            console.error(err);
+            showNotification('error', 'Unable to retrieve order transactions.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        React.useEffect(() => { fetchData(); }, []);
+
+        const handleAddItemToCart = () => {
+          if (!selectedProductId) return;
+          const qty = parseInt(itemQuantity, 10);
+          if (isNaN(qty) || qty <= 0) return;
+
+          const product = products.find(p => p.id === parseInt(selectedProductId, 10));
+          if (!product) return;
+
+          const existingItem = cartItems.find(item => item.product_id === product.id);
+          const currentQty = existingItem ? existingItem.quantity : 0;
+          const targetQty = currentQty + qty;
+
+          if (targetQty > product.quantity) {
+            showNotification('error', `Insufficient stock for ${product.name}. Stock left: ${product.quantity}`);
+            return;
+          }
+
+          if (existingItem) {
+            setCartItems(cartItems.map(item => item.product_id === product.id ? { ...item, quantity: targetQty } : item));
+          } else {
+            setCartItems([...cartItems, {
+              product_id: product.id,
+              name: product.name,
+              quantity: qty,
+              price: product.price
+            }]);
+          }
+          setSelectedProductId('');
+          setItemQuantity('1');
+        };
+
+        const handleRemoveFromCart = (id) => {
+          setCartItems(cartItems.filter(item => item.product_id !== id));
+        };
+
+        const cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        const handlePlaceOrder = async (e) => {
+          e.preventDefault();
+          if (!selectedCustomerId) {
+            showNotification('error', 'Select a customer.');
+            return;
+          }
+          if (cartItems.length === 0) {
+            showNotification('error', 'Add items first.');
+            return;
+          }
+
+          const payload = {
+            customer_id: parseInt(selectedCustomerId, 10),
+            items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity }))
+          };
+
+          try {
+            const res = await fetch(`${API_URL}/orders`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Could not place order');
+
+            showNotification('success', 'Order submitted successfully.');
+            setCartItems([]);
+            setSelectedCustomerId('');
+            fetchData();
+          } catch (err) {
+            console.error(err);
+            showNotification('error', err.message);
+          }
+        };
+
+        const handleCancelOrder = async (id) => {
+          if (!window.confirm('Cancel order? Stock will be restored.')) return;
+          try {
+            const res = await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Could not cancel order');
+            showNotification('success', 'Order cancelled and stock restored.');
+            fetchData();
+          } catch (err) {
+            console.error(err);
+            showNotification('error', err.message);
+          }
+        };
+
+        return (
+          <div className="fade-in">
+            <div className="section-header">
+              <h2>
+                <SvgIcon name="cart" size={24} style={{ color: 'var(--color-primary)' }} />
+                Orders Dashboard
+              </h2>
+            </div>
+
+            <div className="split-layout">
+              <div className="glass-card">
+                <h3>Place Order</h3>
+                <form onSubmit={handlePlaceOrder} className="order-builder" style={{ marginTop: '1.5rem' }}>
+                  <div className="form-group">
+                    <label>Customer</label>
+                    <select className="form-control" value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)} required>
+                      <option value="">-- Choose --</option>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div style={{ padding: '0.85rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--glass-border)', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>Add Product Item</label>
+                    <select className="form-control" value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} style={{ marginBottom: '0.5rem', width: '100%' }}>
+                      <option value="">-- Choose Product --</option>
+                      {products.map(p => <option key={p.id} value={p.id} disabled={p.quantity === 0}>{p.name} (${p.price.toFixed(2)})</option>)}
+                    </select>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input type="number" min="1" className="form-control" style={{ width: '70px' }} value={itemQuantity} onChange={(e) => setItemQuantity(e.target.value)} />
+                      <button type="button" className="btn btn-secondary" style={{ flexGrow: 1 }} onClick={handleAddItemToCart}>Add</button>
+                    </div>
+                  </div>
+
+                  {cartItems.length > 0 && (
+                    <div>
+                      <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: 'var(--text-muted)' }}>Items List</p>
+                      <div className="added-items-list">
+                        {cartItems.map(item => (
+                          <div key={item.product_id} className="added-item-row">
+                            <div>
+                              <span style={{ fontWeight: '600', fontSize: '0.875rem' }}>{item.name}</span>
+                            </div>
+                            <div style={{ fontSize: '0.875rem' }}>× {item.quantity}</div>
+                            <div style={{ fontWeight: 'bold', fontSize: '0.875rem' }}>${(item.price * item.quantity).toFixed(2)}</div>
+                            <button type="button" className="btn btn-danger btn-icon-only" style={{ padding: '0.2rem' }} onClick={() => handleRemoveFromCart(item.product_id)}><SvgIcon name="x" size={10} /></button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="total-summary-box">
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Order Total</span>
+                        </div>
+                        <div className="total-price-text">${cartTotal.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }} disabled={cartItems.length === 0}>
+                    Submit Order
+                  </button>
+                </form>
+              </div>
+
+              <div className="glass-card">
+                <h3>Order Transactions</h3>
+                {loading ? (
+                  <div className="loading-indicator"><div className="spinner"></div></div>
+                ) : orders.length > 0 ? (
+                  <div className="table-container" style={{ marginTop: '1.5rem' }}>
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Customer</th>
+                          <th>Total Price</th>
+                          <th style={{ textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map(o => (
+                          <tr key={o.id}>
+                            <td>
+                              <strong>Order #{o.id}</strong>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>{new Date(o.created_at).toLocaleDateString()}</span>
+                            </td>
+                            <td>{o.customer_name}</td>
+                            <td><strong style={{ color: 'var(--color-success)' }}>${o.total_amount.toFixed(2)}</strong></td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-secondary btn-icon-only" onClick={() => setActiveOrderDetails(o)}><SvgIcon name="eye" size={14} /></button>
+                                <button className="btn btn-danger btn-icon-only" onClick={() => handleCancelOrder(o.id)}><SvgIcon name="trash" size={14} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: '1.5rem', color: 'var(--text-muted)', textAlign: 'center' }}>No orders placed.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal */}
+            {activeOrderDetails && (
+              <div className="modal-overlay" onClick={() => setActiveOrderDetails(null)}>
+                <div className="glass-card modal-content" onClick={e => e.stopPropagation()}>
+                  <div className="section-header" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
+                    <h3>Order #{activeOrderDetails.id} Details</h3>
+                    <button className="btn btn-secondary btn-icon-only" onClick={() => setActiveOrderDetails(null)}><SvgIcon name="x" size={14} /></button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Customer</p>
+                      <p style={{ fontWeight: 'bold' }}>{activeOrderDetails.customer_name}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Date</p>
+                      <p style={{ fontWeight: 'bold' }}>{new Date(activeOrderDetails.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="table-container">
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Qty</th>
+                          <th style={{ textAlign: 'right' }}>Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeOrderDetails.items.map(item => (
+                          <tr key={item.id}>
+                            <td><strong>{item.product_name}</strong></td>
+                            <td>{item.quantity}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold' }}>${((item.product_price ?? 0) * item.quantity).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="total-summary-box">
+                    <div><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Grand Total</span></div>
+                    <div className="total-price-text" style={{ color: 'var(--color-success)' }}>${activeOrderDetails.total_amount.toFixed(2)}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // --- Main App Wrapper ---
+      function App() {
+        const [activeTab, setActiveTab] = React.useState('dashboard');
+        const [notification, setNotification] = React.useState(null);
+
+        React.useEffect(() => {
+          if (notification) {
+            const timer = setTimeout(() => setNotification(null), 4000);
+            return () => clearTimeout(timer);
+          }
+        }, [notification]);
+
+        const showNotification = (type, message) => {
+          setNotification({ type, message });
+        };
+
+        return (
+          <div className="app-container">
+            <aside className="sidebar">
+              <div>
+                <div className="brand">
+                  <div className="brand-logo"><SvgIcon name="activity" size={28} /></div>
+                  <h1 className="brand-name">Sphere</h1>
+                </div>
+                <ul className="nav-links">
+                  <li>
+                    <button className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                      <SvgIcon name="dashboard" /> Dashboard
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`nav-item ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
+                      <SvgIcon name="package" /> Products
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`nav-item ${activeTab === 'customers' ? 'active' : ''}`} onClick={() => setActiveTab('customers')}>
+                      <SvgIcon name="users" /> Customers
+                    </button>
+                  </li>
+                  <li>
+                    <button className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
+                      <SvgIcon name="cart" /> Orders
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                &copy; 2026 Sphere Inc.
+              </div>
+            </aside>
+
+            <main className="content-area">
+              {notification && (
+                <div className={`alert-banner ${notification.type}`}>
+                  <strong>{notification.type === 'success' ? '✓' : '✕'}</strong>
+                  <span>{notification.message}</span>
+                </div>
+              )}
+              {activeTab === 'dashboard' && <Dashboard showNotification={showNotification} />}
+              {activeTab === 'products' && <Products showNotification={showNotification} />}
+              {activeTab === 'customers' && <Customers showNotification={showNotification} />}
+              {activeTab === 'orders' && <Orders showNotification={showNotification} />}
+            </main>
+          </div>
+        );
+      }
+
+      const rootElement = document.getElementById('root');
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(<App />);
+    </script>
+  </body>
+</html>
